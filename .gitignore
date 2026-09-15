@@ -1,0 +1,27 @@
+# IDEs and Editors
+.idea/
+*.iml
+.vscode/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Secrets and Environment Variables
+.env
+.env.local
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local Databases
+*.db
+*.sqlite3
+
+# OS generated files
+.DS_Store
+Thumbs.db
