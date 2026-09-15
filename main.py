@@ -2,9 +2,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
 
+from database import engine
+from models import Base
 app = FastAPI()
 
-
+Base.metadata.create_all(bind=engine)
 
 
 toDoList = [1, 2, 3, 5]
