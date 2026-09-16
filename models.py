@@ -19,6 +19,7 @@ class Todo(Base):
     done = Column(Boolean)
     user_id = Column(Integer, ForeignKey('user.id'))
     owner = relationship('User', back_populates='todos')
+    importance = Column(Integer)
 
 
 
