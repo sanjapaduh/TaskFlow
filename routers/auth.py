@@ -33,7 +33,7 @@ ALGORITHM = "HS256"
 
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oath2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 class CreateUserRequest(BaseModel):
     username: str = Field(pattern=r".*\d{1}.*")
@@ -65,18 +65,19 @@ def create_token_access(username: str,
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user(token: Annotated[str, Depends(oath2_bearer)]):
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail="User is not authorized")
+                                detail="User id or name is not authorized")
         return {"username": username, "id": user_id}
     except:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="User is not authorized")
+                            detail="User is not authorized user")
 
 
 @router.post("/create_user")
@@ -91,9 +92,10 @@ def create_user(
     )
     db.add(create_user_model)
     db.commit()
+    return {"success" : True, "user" : user}
 
 
-@router.post("/create_user/token")
+@router.post("/token")
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db :db_dependency):
     user = authenticate_user(
         form_data.username,
