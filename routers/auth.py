@@ -10,8 +10,11 @@ from fastapi import Depends, APIRouter, HTTPException
 from pydantic import BaseModel, Field, EmailStr
 from sqlalchemy.orm import session
 from starlette import status
+from starlette.requests import Request
+from starlette.templating import Jinja2Templates
 
 from database import SessionLocal
+# from main import templates
 # from main import get_db
 from models import User
 
@@ -34,6 +37,9 @@ ALGORITHM = "HS256"
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
+templates = Jinja2Templates(directory="templates")
+
 
 class CreateUserRequest(BaseModel):
     username: str = Field(pattern=r".*\d{1}.*")
@@ -79,6 +85,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="User is not authorized user")
 
+@router.get("/login-page")
+def render_login_page(request: Request):
+    return templates.TemplateResponse(request, "login.html")
+
+@router.get("/register-page")
+def render_register_page(request: Request):
+    return templates.TemplateResponse(request, "register.html")
 
 @router.post("/create_user")
 def create_user(
