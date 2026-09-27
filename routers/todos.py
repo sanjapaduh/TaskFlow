@@ -57,7 +57,7 @@ async def create_ToDo(todo_request: Todo_request,
     max_number = db.scalar(stmt)
     next_number = (max_number or 0) + 1
     todo_create_model = Todo(
-        user_task_number = next_number,
+        user_task_number=next_number,
         name=todo_request.name,
         description=todo_request.description,
         done=todo_request.done,
@@ -83,14 +83,15 @@ def todo_item(item_id: int,
 
     return {"todo": todo_model}
 
-@router.put("/todo/change/item_id{item_id}")
-async def change_todo(item_id:int,
+
+@router.put("/change/item_id{item_id}")
+async def change_todo(item_id: int,
                       todo_request: Todo_request,
                       db: db_dependency,
                       current_user: Annotated[dict, Depends(get_current_user)]):
     user_id = current_user.get("id")
     stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
-    todo_model= db.scalar(stml)
+    todo_model = db.scalar(stml)
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found")
 
@@ -100,15 +101,30 @@ async def change_todo(item_id:int,
     todo_model.done = todo_request.done
     db.commit()
     db.refresh(todo_model)
-    return {"updated todo" : todo_model}
+    return {"updated todo": todo_model}
 
-# @router.post("/addtodo", status_code=status.HTTP_201_CREATED)
-# async def create_todo(
-#         db:db_dependency,
-#         todo_request:Todo_request):
-#
-#     todo_model = Todo(**todo_request, owner_id=user.get('id'))
-#     db.add(todo_model)
+
+
+@router.delete("/delete/todo:{item_id}")
+def delete_todo(
+        item_id: int,
+        db:db_dependency,
+        current_user:Annotated[dict, Depends(get_current_user)]
+    ):
+    user_id = current_user.get("id")
+    stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
+    todo_model = db.scalar(stml)
+
+
+    if todo_model is None:
+        return HTTPException(status_code=404, detail="there are not todo with this number ")
+
+    db.delete(todo_model)
+    db.query(Todo).filter(Todo.user_id == user_id, Todo.user_task_number > item_id).update(
+        {Todo.user_task_number: Todo.user_task_number - 1},
+        synchronize_session=False)
+    db.commit()
+    return {"deletion" : "success"}
 
 @router.get("/todos")
 def all_todos():
