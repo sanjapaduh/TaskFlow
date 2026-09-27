@@ -74,36 +74,33 @@ def todo_item(item_id: int,
               db: db_dependency,
               current_user: Annotated[dict, Depends(get_current_user)]
               ):
-    # мне нужно отсортировать базу данных по юзер айди и потом
     user_id = current_user.get("id")
     stmt = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
 
-    # stmt = Select(
-    #     func.row_number()
-    #         .over(order_by=Todo.id)
-    #         .label("index_number"),
-    #
-    # ).where(Todo.user_id == user_id)
     todo_model = db.scalar(stmt)
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found")
 
     return {"todo": todo_model}
 
-@router.put("/todo/change")
-async def change_todo(todo_request: Todo_request,
-                      request: Request,
+@router.put("/todo/change/item_id{item_id}")
+async def change_todo(item_id:int,
+                      todo_request: Todo_request,
                       db: db_dependency,
                       current_user: Annotated[dict, Depends(get_current_user)]):
     user_id = current_user.get("id")
-    todo_changed_model = Todo(
-        name=todo_request.name,
-        description=todo_request.description,
-        done=todo_request.done,
-        importance=todo_request.importance
-    )
-    db.commit(todo_request)
+    stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
+    todo_model= db.scalar(stml)
+    if todo_model is None:
+        raise HTTPException(status_code=404, detail="Todo not found")
 
+    todo_model.name = todo_request.name
+    todo_model.description = todo_request.description
+    todo_model.importance = todo_request.importance
+    todo_model.done = todo_request.done
+    db.commit()
+    db.refresh(todo_model)
+    return {"updated todo" : todo_model}
 
 # @router.post("/addtodo", status_code=status.HTTP_201_CREATED)
 # async def create_todo(
