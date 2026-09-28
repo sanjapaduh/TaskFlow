@@ -1,20 +1,23 @@
-# Use Python 3.13 to match your local environment
 FROM python:3.13-slim
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the requirements file first
-COPY requirements.txt .
+# Install poetry
+RUN pip install poetry
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Disable virtualenv creation - Docker containers don't need them
+RUN poetry config virtualenvs.create false
 
-# Copy the rest of your application code
+# Copy ONLY dependencies first to leverage Docker layer caching
+COPY pyproject.toml poetry.lock ./
+
+# The crucial fix: --no-root installs dependencies ONLY, skipping the project itself
+RUN poetry install --no-interaction --no-ansi --no-root
+
+# Now copy the rest of your application code
 COPY . .
 
-# Expose the port
 EXPOSE 8080
 
-# Start the FastAPI server (pointing directly to main.py in the root)
+# Because we disabled virtualenvs, we can run uvicorn directly without 'poetry run'
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
