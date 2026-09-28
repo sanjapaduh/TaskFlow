@@ -85,18 +85,43 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="User is not authorized user")
 
-@router.get("/login-page")
-def render_login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html")
+@router.post("/login-page")
+def render_login_page(
+        request: Request,
+        db: db_dependency,
+        user: CreateUserRequest
+):
+    user_token = authenticate_user(
+        user.username,
+        user.password,
+        db
+    )
+    # hashed_password = bcrypt_context.hash(user.password).verify()
+    stml = db.query(User).filter(user.username == User.username).first()
+    if stml is None or not bcrypt_context.verify(user.password, stml.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password"
+        )
+    # return {"logged in status": "success"}
+    token = create_token_access(
+        user_token.username,
+        user_token.id,
+        timedelta(minutes=90)
+    )
+    return {'access_token': token, 'token_type': 'bearer', "logged" : "success", "user_id" : user_token.id}
 
-@router.get("/register-page")
-def render_register_page(request: Request):
-    return templates.TemplateResponse(request, "register.html")
+
+
+
+    # return templates.TemplateResponse(request, "login.html")
+
 
 @router.post("/create_user")
 def create_user(
         db: db_dependency,
-        user: CreateUserRequest):
+        user: CreateUserRequest
+):
     create_user_model = User(
         username=user.username,
         email=user.email,
