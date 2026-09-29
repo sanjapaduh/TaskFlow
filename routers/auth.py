@@ -1,8 +1,7 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from passlib.context import CryptContext
+from fastapi.security import  OAuth2PasswordRequestForm
 
 from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import session
@@ -11,6 +10,7 @@ from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
 from models import User
+from routers.dependencies import db_dependency
 from routers.schemas import CreateUserRequest
 from database import get_db
 from routers.security import authenticate_user, create_token_access, bcrypt_context
@@ -20,7 +20,6 @@ router = APIRouter(
     tags=["auth"]
 )
 
-db_dependency = Annotated[session, Depends(get_db)]
 
 
 
