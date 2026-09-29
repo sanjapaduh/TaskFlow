@@ -1,57 +1,27 @@
-from typing import Annotated
-
-from sqlalchemy import Select, func, select
+from sqlalchemy import func, select
 
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 
 from models import Todo
-from .auth import get_current_user
-from fastapi import Depends, APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import session
+from .dependencies import Get_current_user, db_dependency
+from fastapi import APIRouter, HTTPException
 
-from database import SessionLocal
-
-# from .main import get_db
+from .shemas import Todo_request
 
 router = APIRouter(
     prefix="/todos",
     tags=["todos"]
 )
 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-db_dependency = Annotated[session, Depends(get_db)]
 template = Jinja2Templates(directory="templates")
-
-
-# toDoList = [1, 2, 3, 5]
-
-
-class Todo_request(BaseModel):
-    name: str = Field(min_length=3)
-    description: str = Field(min_length=3, max_length=25)
-    done: bool
-
-    importance: int = Field(
-        ge=0,
-        le=10
-    )
 
 
 @router.post("/addtodo")
 async def create_ToDo(todo_request: Todo_request,
                       request: Request,
                       db: db_dependency,
-                      current_user: Annotated[dict, Depends(get_current_user)]):
+                      current_user: Get_current_user):
     user_id = current_user.get("id")
     stmt = select(func.max(Todo.user_task_number)).where(Todo.user_id == user_id)
     max_number = db.scalar(stmt)
@@ -72,7 +42,7 @@ async def create_ToDo(todo_request: Todo_request,
 @router.get("/get/{item_id}")
 def todo_item(item_id: int,
               db: db_dependency,
-              current_user: Annotated[dict, Depends(get_current_user)]
+              current_user: Get_current_user
               ):
     user_id = current_user.get("id")
     stmt = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
@@ -88,7 +58,7 @@ def todo_item(item_id: int,
 async def change_todo(item_id: int,
                       todo_request: Todo_request,
                       db: db_dependency,
-                      current_user: Annotated[dict, Depends(get_current_user)]):
+                      current_user: Get_current_user):
     user_id = current_user.get("id")
     stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
     todo_model = db.scalar(stml)
@@ -104,17 +74,15 @@ async def change_todo(item_id: int,
     return {"updated todo": todo_model}
 
 
-
 @router.delete("/delete/todo:{item_id}")
 def delete_todo(
         item_id: int,
-        db:db_dependency,
-        current_user:Annotated[dict, Depends(get_current_user)]
-    ):
+        db: db_dependency,
+        current_user: Get_current_user
+):
     user_id = current_user.get("id")
     stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
     todo_model = db.scalar(stml)
-
 
     if todo_model is None:
         return HTTPException(status_code=404, detail="there are not todo with this number ")
@@ -124,7 +92,8 @@ def delete_todo(
         {Todo.user_task_number: Todo.user_task_number - 1},
         synchronize_session=False)
     db.commit()
-    return {"deletion" : "success"}
+    return {"deletion": "success"}
+
 
 @router.get("/todos")
 def all_todos():
