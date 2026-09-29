@@ -5,7 +5,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.status import HTTP_302_FOUND
 from starlette.templating import Jinja2Templates
 
-from routers import testdoc, todos, auth
+from routers import todos, auth
 from database import engine, SessionLocal
 from models import Base
 
@@ -25,7 +25,6 @@ def hello():
 
 # Connecting bd
 
-app.include_router(testdoc.router)
 app.include_router(todos.router)
 app.include_router(auth.router)
 

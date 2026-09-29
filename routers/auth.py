@@ -13,7 +13,7 @@ from starlette.templating import Jinja2Templates
 from models import User
 from routers.schemas import CreateUserRequest
 from database import get_db
-from routers.security import authenticate_user, create_token_access
+from routers.security import authenticate_user, create_token_access, bcrypt_context
 
 router = APIRouter(
     prefix="/auth",
@@ -21,12 +21,8 @@ router = APIRouter(
 )
 
 db_dependency = Annotated[session, Depends(get_db)]
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
 
 
-bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 templates = Jinja2Templates(directory="templates")
 
