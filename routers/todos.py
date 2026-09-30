@@ -7,10 +7,9 @@ from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 
 from models import Todo
-from database import db_dependency
-from .security import Get_current_user
 from fastapi import APIRouter, HTTPException
 
+from .dependencies import db_dependency, Get_current_user
 from .shemas import Todo_request
 
 router = APIRouter(
@@ -105,9 +104,10 @@ def all_todos(
         current_user: Get_current_user
 ):
 
-    stml = select(Todo).where(Todo.user_id == current_user)
+    user_id = current_user.get("id")
+    stml = select(Todo).where(Todo.user_id == user_id)
     todo_model = db.execute(stml).scalars().all()
-    if todo_model is None:
+    if not todo_model :
         raise HTTPException(status_code=404, detail="Todo not found")
 
     return {"Your todos" : todo_model}
