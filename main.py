@@ -9,7 +9,7 @@ from database import engine, SessionLocal
 from models import Base
 from routers.dependencies import db_dependency
 
-app = FastAPI()
+# app = FastAPI()
 
 
 @asynccontextmanager
@@ -17,6 +17,7 @@ async def livespan(app: FastAPI):
     async with db_dependency.engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+app = FastAPI(livespan=livespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -28,6 +29,5 @@ def hello():
 
 
 # Connecting bd
-app = FastAPI(livespan=livespan)
 app.include_router(todos.router)
 app.include_router(auth.router)

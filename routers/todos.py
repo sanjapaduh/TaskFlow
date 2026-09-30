@@ -1,12 +1,15 @@
+from unittest import result
+
 from sqlalchemy import func, select
+from sqlalchemy.orm import session
 
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 
 from models import Todo
-from .dependencies import Get_current_user, db_dependency
 from fastapi import APIRouter, HTTPException
 
+from .dependencies import db_dependency, Get_current_user
 from .shemas import Todo_request
 
 router = APIRouter(
@@ -18,7 +21,7 @@ template = Jinja2Templates(directory="templates")
 
 
 @router.post("/addtodo")
-async def create_ToDo(todo_request: Todo_request,
+def create_ToDo(todo_request: Todo_request,
                       request: Request,
                       db: db_dependency,
                       current_user: Get_current_user):
@@ -55,7 +58,7 @@ def todo_item(item_id: int,
 
 
 @router.put("/change/item_id{item_id}")
-async def change_todo(item_id: int,
+def change_todo(item_id: int,
                       todo_request: Todo_request,
                       db: db_dependency,
                       current_user: Get_current_user):
@@ -96,5 +99,16 @@ def delete_todo(
 
 
 @router.get("/todos")
-def all_todos():
-    return {"message": "toDoList"}
+def all_todos(
+        db: db_dependency,
+        current_user: Get_current_user
+):
+
+    user_id = current_user.get("id")
+    stml = select(Todo).where(Todo.user_id == user_id)
+    todo_model = db.execute(stml).scalars().all()
+    if not todo_model :
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    return {"Your todos" : todo_model}
+
