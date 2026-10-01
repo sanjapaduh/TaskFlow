@@ -21,7 +21,7 @@ template = Jinja2Templates(directory="templates")
 
 
 @router.post("/addtodo")
-def create_ToDo(todo_request: Todo_request,
+async def create_ToDo(todo_request: Todo_request,
                       request: Request,
                       db: db_dependency,
                       current_user: Get_current_user):
@@ -37,20 +37,20 @@ def create_ToDo(todo_request: Todo_request,
         importance=todo_request.importance,
         user_id=user_id
     )
-    db.add(todo_create_model)
-    db.commit()
+    await db.add(todo_create_model)
+    await db.commit()
     return template.TemplateResponse(request, "add-todo.html")
 
 
 @router.get("/get/{item_id}")
-def todo_item(item_id: int,
+async def todo_item(item_id: int,
               db: db_dependency,
               current_user: Get_current_user
               ):
     user_id = current_user.get("id")
     stmt = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
 
-    todo_model = db.scalar(stmt)
+    todo_model = await db.scalar(stmt)
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found")
 
@@ -58,13 +58,13 @@ def todo_item(item_id: int,
 
 
 @router.put("/change/item_id{item_id}")
-def change_todo(item_id: int,
+async def change_todo(item_id: int,
                       todo_request: Todo_request,
                       db: db_dependency,
                       current_user: Get_current_user):
     user_id = current_user.get("id")
     stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
-    todo_model = db.scalar(stml)
+    todo_model = await db.scalar(stml)
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found")
 
@@ -72,41 +72,41 @@ def change_todo(item_id: int,
     todo_model.description = todo_request.description
     todo_model.importance = todo_request.importance
     todo_model.done = todo_request.done
-    db.commit()
-    db.refresh(todo_model)
+    await db.commit()
+    await db.refresh(todo_model)
     return {"updated todo": todo_model}
 
 
 @router.delete("/delete/todo:{item_id}")
-def delete_todo(
+async def delete_todo(
         item_id: int,
         db: db_dependency,
         current_user: Get_current_user
 ):
     user_id = current_user.get("id")
     stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
-    todo_model = db.scalar(stml)
+    todo_model = await db.scalar(stml)
 
     if todo_model is None:
         return HTTPException(status_code=404, detail="there are not todo with this number ")
 
-    db.delete(todo_model)
-    db.query(Todo).filter(Todo.user_id == user_id, Todo.user_task_number > item_id).update(
+    await db.delete(todo_model)
+    await db.query(Todo).filter(Todo.user_id == user_id, Todo.user_task_number > item_id).update(
         {Todo.user_task_number: Todo.user_task_number - 1},
         synchronize_session=False)
-    db.commit()
+    await db.commit()
     return {"deletion": "success"}
 
 
 @router.get("/todos")
-def all_todos(
+async def all_todos(
         db: db_dependency,
         current_user: Get_current_user
 ):
 
     user_id = current_user.get("id")
     stml = select(Todo).where(Todo.user_id == user_id)
-    todo_model = db.execute(stml).scalars().all()
+    todo_model =await db.execute(stml).scalars().all()
     if not todo_model :
         raise HTTPException(status_code=404, detail="Todo not found")
 
