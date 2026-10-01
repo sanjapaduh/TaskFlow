@@ -27,7 +27,7 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.post("/login-page")
-def render_login_page(
+async def render_login_page(
         request: Request,
         db: db_dependency,
         user: CreateUserRequest
@@ -38,7 +38,7 @@ def render_login_page(
         db
     )
     # hashed_password = bcrypt_context.hash(user.password).verify()
-    stml = db.query(User).filter(user.username == User.username).first()
+    stml = await db.query(User).filter(user.username == User.username).first()
     if stml is None or not bcrypt_context.verify(user.password, stml.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,7 +59,7 @@ def render_login_page(
 
 
 @router.post("/create_user")
-def create_user(
+async def create_user(
         db: db_dependency,
         user: CreateUserRequest
 ):
@@ -70,12 +70,12 @@ def create_user(
 
     )
     db.add(create_user_model)
-    db.commit()
-    return {"success" : True, "user" : user},templates.TemplateResponse("registration")
+    await db.commit()
+    return {"success" : True, "user" : user}
 
 
 @router.post("/token")
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db :db_dependency):
+def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db :db_dependency):
     user = authenticate_user(
         form_data.username,
         form_data.password,
