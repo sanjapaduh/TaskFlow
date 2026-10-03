@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi.security import  OAuth2PasswordRequestForm
 
 from fastapi import Depends, APIRouter, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import session
 from starlette import status
 from starlette.requests import Request
@@ -28,34 +29,29 @@ templates = Jinja2Templates(directory="templates")
 
 @router.post("/login-page")
 async def render_login_page(
-        request: Request,
         db: db_dependency,
         user: CreateUserRequest
 ):
-    user_token = authenticate_user(
+    user_token = await authenticate_user(
         user.username,
         user.password,
         db
     )
-    # hashed_password = bcrypt_context.hash(user.password).verify()
-    stml = await db.query(User).filter(user.username == User.username).first()
-    if stml is None or not bcrypt_context.verify(user.password, stml.hashed_password):
+    if not user_token :
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
         )
-    # return {"logged in status": "success"}
     token = create_token_access(
         user_token.username,
         user_token.id,
         timedelta(minutes=90)
     )
-    return {'access_token': token, 'token_type': 'bearer', "logged" : "success", "user_id" : user_token.id}
+    return {'access_token': token, 'token_type': 'bearer', "logged" : "success", "user" : user_token}
 
 
 
 
-    # return templates.TemplateResponse(request, "login.html")
 
 
 @router.post("/create_user")

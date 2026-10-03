@@ -6,11 +6,11 @@ from sqlalchemy.orm import session
 from starlette.templating import Jinja2Templates
 from starlette.requests import Request
 
-from models import Todo
+from models import Todo, Tags
 from fastapi import APIRouter, HTTPException
 
 from .dependencies import db_dependency, Get_current_user
-from .shemas import Todo_request
+from .shemas import Todo_request, Tag_request
 
 router = APIRouter(
     prefix="/todos",
@@ -35,12 +35,15 @@ async def create_ToDo(todo_request: Todo_request,
         description=todo_request.description,
         done=todo_request.done,
         importance=todo_request.importance,
-        user_id=user_id
+
+        user_id=user_id,
     )
+    for tag_data in todo_request.tags:
+        newTag= Tags(name=tag_data.name, color=tag_data.color)
+        todo_create_model.tags.append(newTag)
     await db.add(todo_create_model)
     await db.commit()
-    return template.TemplateResponse(request, "add-todo.html")
-
+    return {'status' : "successes ", "request": todo_create_model}
 
 @router.get("/get/{item_id}")
 async def todo_item(item_id: int,
