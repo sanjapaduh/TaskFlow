@@ -5,6 +5,7 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from sqlalchemy import select
 from starlette import status
 
 from models import User
@@ -15,8 +16,9 @@ ALGORITHM = "HS256"
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
-def authenticate_user(username: str, password: str, db):
-    user = db.query(User).filter(User.username == username).first()
+async def authenticate_user(username: str, password: str, db):
+    stmt = select(User).filter(User.username == username)
+    user= await db.scalar(stmt)
     if not user:
         return False
     if not bcrypt_context.verify(password, user.hashed_password):

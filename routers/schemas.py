@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, EmailStr
 
 class CreateUserRequest(BaseModel):
     username: str = Field(pattern=r".*\d{1}.*")
-    email: EmailStr
+    email: EmailStr |None = None
     password: str
 
 
