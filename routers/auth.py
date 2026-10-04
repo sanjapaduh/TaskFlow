@@ -4,16 +4,12 @@ from typing import Annotated
 from fastapi.security import  OAuth2PasswordRequestForm
 
 from fastapi import Depends, APIRouter, HTTPException
-from sqlalchemy import select
-from sqlalchemy.orm import session
 from starlette import status
-from starlette.requests import Request
 from starlette.templating import Jinja2Templates
 
 from models import User
 from routers.dependencies import db_dependency
 from routers.schemas import CreateUserRequest
-from database import get_db
 from routers.security import authenticate_user, create_token_access, bcrypt_context
 
 router = APIRouter(
@@ -69,10 +65,10 @@ async def create_user(
     await db.commit()
     return {"success" : True, "user" : user}
 
-
+#
 @router.post("/token")
-def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db :db_dependency):
-    user = authenticate_user(
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db :db_dependency):
+    user = await authenticate_user(
         form_data.username,
         form_data.password,
         db
@@ -80,7 +76,7 @@ def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depen
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="User is not authorized")
-    token = create_token_access(
+    token =  create_token_access(
         user.username,
         user.id,
         timedelta(minutes=90)
