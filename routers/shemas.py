@@ -6,7 +6,7 @@ from models import ColorEnum
 
 
 class Tag_request(BaseModel):
-    name: str = Field(min_length=3, max_length=15)
+    name: str
     color: ColorEnum
 
 class Todo_request(BaseModel):
