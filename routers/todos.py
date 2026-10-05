@@ -1,9 +1,12 @@
 from sqlalchemy import func, select
+from sqlalchemy import update
+
+
 from sqlalchemy.orm import joinedload
 
 from starlette.templating import Jinja2Templates
 
-from models import Todo, Tags, task_tags, ColorEnum
+from models import Todo, Tags
 from fastapi import APIRouter, HTTPException
 
 from .dependencies import db_dependency, Get_current_user
@@ -106,8 +109,6 @@ async def change_todo(item_id: int,
         raise HTTPException(status_code=404, detail="already exist")
 
 
-
-
 @router.delete("/delete/todo:{item_id}")
 async def delete_todo(
         item_id: int,
@@ -116,17 +117,20 @@ async def delete_todo(
 ):
     user_id = current_user.get("id")
     stml = (select(Todo)
-            .options(joinedload(Tags))
+            .options(joinedload(Todo.tags))
             .where(Todo.user_task_number == item_id, Todo.user_id == user_id))
     todo_model = await db.scalar(stml)
-
     if todo_model is None:
         return HTTPException(status_code=404, detail="there are not todo with this number ")
 
     await db.delete(todo_model)
-    await db.query(Todo).filter(Todo.user_id == user_id, Todo.user_task_number > item_id).update(
-        {Todo.user_task_number: Todo.user_task_number - 1},
-        synchronize_session=False)
+    update_stmt = (
+        update(Todo)
+        .where(Todo.user_id == user_id, Todo.user_task_number > item_id)
+        .values(user_task_number=Todo.user_task_number - 1)
+    )
+    await db.execute(update_stmt)
+
     await db.commit()
     return {"deletion": "success"}
 
