@@ -1,12 +1,12 @@
-from unittest import result
-
 from sqlalchemy import func, select
-from sqlalchemy.orm import session, joinedload
+from sqlalchemy import update
+
+
+from sqlalchemy.orm import joinedload
 
 from starlette.templating import Jinja2Templates
-from starlette.requests import Request
 
-from models import Todo, Tags, task_tags, ColorEnum
+from models import Todo, Tags
 from fastapi import APIRouter, HTTPException
 
 from .dependencies import db_dependency, Get_current_user
@@ -63,7 +63,8 @@ async def todo_item(item_id: int,
     user_id = current_user.get("id")
     stmt = (
         select(Todo)
-        .options(joinedload(Todo.tags))
+        .options(joinedload(
+            Todo.tags))  # N+1 problem (todo.tag is lazyload which is impossible in async def. we use eager load)
         .where(Todo.user_task_number == item_id, Todo.user_id == user_id)
     )
     todo_model = await db.scalar(stmt)
@@ -76,21 +77,36 @@ async def todo_item(item_id: int,
 @router.put("/change/item_id{item_id}")
 async def change_todo(item_id: int,
                       todo_request: Todo_request,
+                      tag: Tag_request,
                       db: db_dependency,
                       current_user: Get_current_user):
     user_id = current_user.get("id")
-    stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
+    stml = (select(Todo)
+            .options(joinedload(Todo.tags))
+            .where(Todo.user_task_number == item_id, Todo.user_id == user_id))
+
     todo_model = await db.scalar(stml)
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found")
+    try:
+        todo_model.name = todo_request.name
+        todo_model.description = todo_request.description
+        todo_model.importance = todo_request.importance
+        todo_model.done = todo_request.done
 
-    todo_model.name = todo_request.name
-    todo_model.description = todo_request.description
-    todo_model.importance = todo_request.importance
-    todo_model.done = todo_request.done
-    await db.commit()
-    await db.refresh(todo_model)
-    return {"updated todo": todo_model}
+        stmt_tag = (select(Tags).where(Tags.name == tag.name, Tags.color == tag.color))
+        tag_obj = await db.scalar(stmt_tag)
+        if tag_obj:
+            todo_model.tags.append(tag_obj)
+        else:
+            new_tag_object = Tags(name=tag.name, color=tag.color)
+            # await db.flush()
+            todo_model.tags.append(new_tag_object)
+        await db.commit()
+        await db.refresh(todo_model)
+        return {"updated todo": "success"}
+    except:
+        raise HTTPException(status_code=404, detail="already exist")
 
 
 @router.delete("/delete/todo:{item_id}")
@@ -100,16 +116,21 @@ async def delete_todo(
         current_user: Get_current_user
 ):
     user_id = current_user.get("id")
-    stml = select(Todo).where(Todo.user_task_number == item_id, Todo.user_id == user_id)
+    stml = (select(Todo)
+            .options(joinedload(Todo.tags))
+            .where(Todo.user_task_number == item_id, Todo.user_id == user_id))
     todo_model = await db.scalar(stml)
-
     if todo_model is None:
         return HTTPException(status_code=404, detail="there are not todo with this number ")
 
     await db.delete(todo_model)
-    await db.query(Todo).filter(Todo.user_id == user_id, Todo.user_task_number > item_id).update(
-        {Todo.user_task_number: Todo.user_task_number - 1},
-        synchronize_session=False)
+    update_stmt = (
+        update(Todo)
+        .where(Todo.user_id == user_id, Todo.user_task_number > item_id)
+        .values(user_task_number=Todo.user_task_number - 1)
+    )
+    await db.execute(update_stmt)
+
     await db.commit()
     return {"deletion": "success"}
 
