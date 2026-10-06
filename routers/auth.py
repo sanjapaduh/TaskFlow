@@ -43,7 +43,7 @@ async def render_login_page(
         user_token.id,
         timedelta(minutes=90)
     )
-    return {'access_token': token, 'token_type': 'bearer', "logged" : "success", "user" : user_token}
+    return {'access_token': token, 'token_type': 'bearer', "logged" : "success"}
 
 
 
@@ -63,7 +63,7 @@ async def create_user(
     )
     db.add(create_user_model)
     await db.commit()
-    return {"success" : True, "user" : user}
+    return {"success" : True}
 
 #
 @router.post("/token")

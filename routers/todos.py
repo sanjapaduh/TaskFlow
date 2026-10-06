@@ -10,7 +10,7 @@ from models import Todo, Tags
 from fastapi import APIRouter, HTTPException
 
 from .dependencies import db_dependency, Get_current_user
-from .shemas import Todo_request, Tag_request
+from .schemas import Tag_request, Todo_request
 
 router = APIRouter(
     prefix="/todos",
@@ -42,7 +42,7 @@ async def create_ToDo(todo_request: Todo_request,
     stmt_tag = (select(Tags).where(Tags.name == tag.name, Tags.color == tag.color))
     tag_obj = await db.scalar(stmt_tag)
     if tag_obj:
-        todo_create_model.tags.append(stmt_tag)
+        todo_create_model.tags.append(tag_obj)
     else:
         new_tag = Tags(name=tag.name, color=tag.color)
         todo_create_model.tags.append(new_tag)
@@ -121,7 +121,7 @@ async def delete_todo(
             .where(Todo.user_task_number == item_id, Todo.user_id == user_id))
     todo_model = await db.scalar(stml)
     if todo_model is None:
-        return HTTPException(status_code=404, detail="there are not todo with this number ")
+        raise HTTPException(status_code=404, detail="there are not todo with this number ")
 
     await db.delete(todo_model)
     update_stmt = (
