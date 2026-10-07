@@ -41,7 +41,8 @@ dependencies = [
     "typing-extensions (==4.16.0)",
     "uvicorn (==0.52.4)",
     "watchfiles (==1.2.0)",
-    "websockets (==17.1)"
+    "websockets (==17.1)",
+    "alembic (>=1.20.0,<2.0.0)"
 ]
 
 
