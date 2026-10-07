@@ -14,6 +14,7 @@ class ColorEnum(str, enum.Enum):
     GREEN="GREEN"
     WHITE="WHITE"
 
+
 task_tags = Table(
     "task_tags",
     Base.metadata,
@@ -47,8 +48,10 @@ class Tags(Base):
     __tablename__ = "tags"
     id : Mapped[int] = mapped_column(primary_key=True, index=True)
     name : Mapped[str] = mapped_column(String(15))
+
     color: Mapped[ColorEnum]= mapped_column(Enum(ColorEnum))
     todos: Mapped[List["Todo"]] = relationship(secondary=task_tags, back_populates="tags")
+
 
 
 
