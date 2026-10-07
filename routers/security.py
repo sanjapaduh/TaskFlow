@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta, datetime, timezone
 from typing import Annotated
 
@@ -5,18 +6,20 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from sqlalchemy import select
 from starlette import status
 
 from models import User
 
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
-def authenticate_user(username: str, password: str, db):
-    user = db.query(User).filter(User.username == username).first()
+async def authenticate_user(username: str, password: str, db):
+    stmt = select(User).filter(User.username == username)
+    user= await db.scalar(stmt)
     if not user:
         return False
     if not bcrypt_context.verify(password, user.hashed_password):
