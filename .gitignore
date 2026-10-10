@@ -3,6 +3,9 @@
 *.iml
 .vscode/
 
+
+.run/
+
 # Virtual Environments
 .venv/
 venv/
