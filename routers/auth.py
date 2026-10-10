@@ -20,7 +20,6 @@ router = APIRouter(
 
 
 
-templates = Jinja2Templates(directory="templates")
 
 
 @router.post("/login-page")
@@ -43,7 +42,7 @@ async def render_login_page(
         user_token.id,
         timedelta(minutes=90)
     )
-    return {'access_token': token, 'token_type': 'bearer', "logged" : "success"}
+    return {'access_token': token, 'token_type': 'bearer', "logged" : user}
 
 
 
