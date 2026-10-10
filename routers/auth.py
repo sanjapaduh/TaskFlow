@@ -1,14 +1,13 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi.security import  OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, Response
 from starlette import status
-from starlette.templating import Jinja2Templates
 
 from models import User
-from routers.dependencies import db_dependency
+from routers.dependencies import db_dependency, Get_current_user
 from routers.schemas import CreateUserRequest
 from routers.security import authenticate_user, create_token_access, bcrypt_context
 
@@ -18,22 +17,18 @@ router = APIRouter(
 )
 
 
-
-
-templates = Jinja2Templates(directory="templates")
-
-
 @router.post("/login-page")
 async def render_login_page(
         db: db_dependency,
-        user: CreateUserRequest
+        user: CreateUserRequest,
+        response: Response
 ):
     user_token = await authenticate_user(
         user.username,
         user.password,
         db
     )
-    if not user_token :
+    if not user_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
@@ -43,11 +38,15 @@ async def render_login_page(
         user_token.id,
         timedelta(minutes=90)
     )
-    return {'access_token': token, 'token_type': 'bearer', "logged" : "success"}
-
-
-
-
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=5400
+    )
+    return {'access_token': token, 'token_type': 'bearer', "logged": user}
 
 
 @router.post("/create_user")
@@ -63,11 +62,22 @@ async def create_user(
     )
     db.add(create_user_model)
     await db.commit()
-    return {"success" : True}
+    return {"success": True}
 
-#
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    return {"message": "successfully logged out"}
+
+
 @router.post("/token")
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db :db_dependency):
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
     user = await authenticate_user(
         form_data.username,
         form_data.password,
@@ -76,13 +86,9 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="User is not authorized")
-    token =  create_token_access(
+    token = create_token_access(
         user.username,
         user.id,
         timedelta(minutes=90)
     )
     return {'access_token': token, 'token_type': 'bearer'}
-
-
-
-

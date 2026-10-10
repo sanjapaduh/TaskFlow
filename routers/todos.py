@@ -17,7 +17,6 @@ router = APIRouter(
     tags=["todos"]
 )
 
-template = Jinja2Templates(directory="templates")
 
 
 @router.post("/addtodo")
@@ -50,7 +49,7 @@ async def create_ToDo(todo_request: Todo_request,
     await db.commit()
     await db.refresh(todo_create_model)
     return {
-        "status": "success"
+        "status": "success", "todo": {todo_create_model}
 
     }
 
@@ -97,15 +96,18 @@ async def change_todo(item_id: int,
         stmt_tag = (select(Tags).where(Tags.name == tag.name, Tags.color == tag.color))
         tag_obj = await db.scalar(stmt_tag)
         if tag_obj:
-            todo_model.tags.append(tag_obj)
+            tag_already_exists = any(existing_tag.id == tag_obj.id for existing_tag in todo_model.tags)
+
+            if not tag_already_exists:
+                todo_model.tags.append(tag_obj)
         else:
             new_tag_object = Tags(name=tag.name, color=tag.color)
-            # await db.flush()
             todo_model.tags.append(new_tag_object)
         await db.commit()
         await db.refresh(todo_model)
-        return {"updated todo": "success"}
-    except:
+        return {"updated todo": "success", "object ": todo_model}
+    except Exception as e:
+        print(f"error {e}")
         raise HTTPException(status_code=404, detail="already exist")
 
 
@@ -147,3 +149,9 @@ async def all_todos(
         raise HTTPException(status_code=404, detail="Todo not found")
 
     return {"Your todos": todo_model}
+
+@router.get("/me")
+async def check_current_user(current_user: Get_current_user):
+    # If the cookie is missing or invalid, the dependency will throw a 401 error.
+    # If it works, it will return the user dictionary.
+    return {"message": "Cookie authentication works!", "user_data": current_user}
