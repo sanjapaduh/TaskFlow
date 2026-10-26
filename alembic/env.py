@@ -6,7 +6,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from database import Base, SQLALCHEMY_DATABASE_URL
-import models
+
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
