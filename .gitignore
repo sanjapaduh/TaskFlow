@@ -3,6 +3,9 @@
 *.iml
 .vscode/
 
+
+.run/
+
 # Virtual Environments
 .venv/
 venv/
@@ -17,7 +20,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
+static
+templates
 # Local Databases
 *.db
 *.sqlite3
