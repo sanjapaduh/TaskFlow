@@ -18,7 +18,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 def hello():
-    return {"Application": "Started"}
+    return FileResponse("static/index.html")
 
 
 @app.middleware("http")
