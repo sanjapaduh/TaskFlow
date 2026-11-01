@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
@@ -21,7 +22,7 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
 def hello():
-    return {"Application": "Started"}
+    return FileResponse("static/index.html")
 
 app.include_router(todos.router)
 app.include_router(auth.router)

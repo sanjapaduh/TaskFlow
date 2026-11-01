@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Focus — задачи</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section id="auth-view" class="auth-card">
+      <div class="brand"><span class="brand-mark">✓</span><span>Focus</span></div>
+      <p class="eyebrow">личный планировщик</p>
+      <h1 id="auth-title">Всё важное — под рукой</h1>
+      <p class="muted" id="auth-subtitle">Войдите, чтобы управлять своими задачами.</p>
+      <form id="auth-form" class="stack">
+        <label>Имя пользователя<input id="auth-username" required autocomplete="username"></label>
+        <label id="email-field" class="hidden">Email<input id="auth-email" type="email" autocomplete="email"></label>
+        <label>Пароль<input id="auth-password" type="password" required minlength="3" autocomplete="current-password"></label>
+        <button class="button primary" type="submit" id="auth-submit">Войти</button>
+      </form>
+      <p id="auth-error" class="error" role="alert"></p>
+      <button class="link-button" id="auth-toggle" type="button">Создать аккаунт</button>
+    </section>
+
+    <section id="app-view" class="hidden">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">✓</span><span>Focus</span></div>
+        <div class="topbar-actions"><span id="user-name" class="user-name"></span><button id="logout" class="button ghost">Выйти</button></div>
+      </header>
+      <div class="app-grid">
+        <section>
+          <div class="page-heading">
+            <div><p class="eyebrow">сегодня</p><h1>Мои задачи</h1></div>
+            <button id="new-task" class="button primary">+ Новая задача</button>
+          </div>
+          <div class="stats"><div><strong id="total-count">0</strong><span>всего</span></div><div><strong id="open-count">0</strong><span>активных</span></div><div><strong id="done-count">0</strong><span>готово</span></div></div>
+          <div class="toolbar"><div class="filters"><button class="filter active" data-filter="all">Все</button><button class="filter" data-filter="open">Активные</button><button class="filter" data-filter="done">Готовые</button></div><input id="search" class="search" type="search" placeholder="Поиск задач"></div>
+          <p id="list-message" class="muted center"></p>
+          <div id="task-list" class="task-list"></div>
+        </section>
+        <aside id="editor" class="editor-card hidden">
+          <div class="editor-heading"><h2 id="editor-title">Новая задача</h2><button id="close-editor" class="icon-button" aria-label="Закрыть">×</button></div>
+          <form id="task-form" class="stack">
+            <label>Название<input id="task-name" required minlength="3" maxlength="80"></label>
+            <label>Описание<textarea id="task-description" required minlength="3" maxlength="25" rows="3"></textarea></label>
+            <label>Важность <span id="importance-value">5</span><input id="task-importance" type="range" min="0" max="10" value="5"></label>
+            <label>Метка<input id="task-tag" maxlength="15" placeholder="например, работа"></label>
+            <label>Цвет метки<select id="task-color"><option value="BLUE">Синий</option><option value="GREEN">Зелёный</option><option value="RED">Красный</option><option value="WHITE">Белый</option></select></label>
+            <label class="checkbox"><input id="task-done" type="checkbox"> Выполнено</label>
+            <button class="button primary" type="submit">Сохранить</button>
+          </form>
+          <p id="task-error" class="error" role="alert"></p>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
