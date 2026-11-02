@@ -4,16 +4,22 @@ from contextlib import asynccontextmanager
 from urllib.request import Request
 
 from fastapi import FastAPI
+from starlette.responses import FileResponse
+from starlette.staticfiles import StaticFiles
 
+from database import Base, engine
 from routers import todos, auth
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
     yield
 
 
 app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")
