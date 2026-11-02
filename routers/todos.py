@@ -144,7 +144,8 @@ async def all_todos(
 ):
     user_id = current_user.get("id")
     stml = select(Todo).where(Todo.user_id == user_id)
-    todo_model = await db.execute(stml).scalars().all()
+    result = await db.execute(stml)
+    todo_model  = result.scalars().all()
     if not todo_model:
         raise HTTPException(status_code=404, detail="Todo not found")
 
