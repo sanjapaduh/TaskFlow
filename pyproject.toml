@@ -1,5 +1,5 @@
 [project]
-name = "yes"
+name = "simple-todo-app"
 version = "0.1.0"
 description = ""
 authors = [
@@ -46,6 +46,8 @@ dependencies = [
     "pytest (>=9.1.1,<10.0.0)",
     "httpx (>=0.28.1,<0.29.0)"
 ]
+[tool.poetry]
+package-mode = false
 
 
 [build-system]

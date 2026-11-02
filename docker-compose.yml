@@ -23,9 +23,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:root@db:5432/postgres
+      DATABASE_URL: postgresql+asyncpg://postgres:root@db:5432/postgres
+      SECRET_KEY: ${SECRET_KEY}
     ports:
       - "8080:8080"
-
 volumes:
   postgres_data:
