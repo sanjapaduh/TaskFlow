@@ -11,14 +11,7 @@ from database import Base, engine
 from routers import todos, auth
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 

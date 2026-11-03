@@ -6,6 +6,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from database import Base, SQLALCHEMY_DATABASE_URL
+# Add the import for all your models here:
+from models import User, Todo, Tags
 
 config = context.config
 if config.config_file_name is not None:

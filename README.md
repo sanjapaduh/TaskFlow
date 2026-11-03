@@ -13,7 +13,7 @@ Focus lets users create an account, sign in, and manage personal tasks with desc
 - Colored task tags
 - Search and status filters in the web interface
 - Responsive UI for desktop and mobile
-- Automatic database table creation on application startup
+- Version-controlled database schema managed with Alembic
 - Interactive API documentation via Swagger UI
 - Redis-backed caching and session-related application data
 - Full automated test suite covering API, authentication, database and frontend integration
@@ -49,6 +49,8 @@ Focus lets users create an account, sign in, and manage personal tasks with desc
 │   ├── styles.css          # Application styles
 │   └── app.js              # Frontend API integration and UI logic
 ├── tests/                  # Unit, integration and end-to-end tests
+├── alembic/                # Database migration configuration and revisions
+├── alembic.ini             # Alembic configuration
 ├── Dockerfile
 ├── docker-compose.yml
 ├── pyproject.toml
@@ -118,6 +120,12 @@ Set the environment variables for a locally running PostgreSQL instance:
 DATABASE_URL=postgresql+asyncpg://postgres:root@localhost:5432/postgres
 REDIS_URL=redis://localhost:6379/0
 SECRET_KEY=replace-this-with-a-long-random-secret
+```
+
+Apply the database migrations before starting the application:
+
+```bash
+poetry run alembic upgrade head
 ```
 
 Start the development server:
@@ -194,14 +202,41 @@ Supported tag colors are `RED`, `BLUE`, `GREEN` and `WHITE`.
 
 ## Database
 
-The application creates the SQLAlchemy tables automatically when it starts. The main entities are:
+Database schema changes are managed with Alembic. The application does not create
+tables automatically when it starts. Apply the latest migrations before running
+the application:
+
+```bash
+poetry run alembic upgrade head
+```
+
+The main entities are:
 
 - `users` — user accounts and password hashes
 - `todos` — tasks owned by users
 - `tags` — reusable task labels
 - `task_tags` — many-to-many relationship between tasks and tags
 
-For production environments, use a migration tool such as Alembic instead of relying on automatic table creation.
+Create a new migration after changing SQLAlchemy models:
+
+```bash
+poetry run alembic revision --autogenerate -m "describe the schema change"
+poetry run alembic upgrade head
+```
+
+To roll back the latest migration:
+
+```bash
+poetry run alembic downgrade -1
+```
+
+When using Docker Compose for a fresh database, start the services first and
+apply the migrations from the application container:
+
+```bash
+docker compose up -d --build
+docker compose exec app alembic upgrade head
+```
 
 ## Security Notes
 
