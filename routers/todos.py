@@ -19,7 +19,22 @@ router = APIRouter(
 
 
 
-@router.post("/addtodo")
+
+@router.get("")
+async def all_todos(
+        db: db_dependency,
+        current_user: Get_current_user
+):
+    user_id = current_user.get("id")
+    stml = select(Todo).where(Todo.user_id == user_id)
+    result = await db.execute(stml)
+    todo_model  = result.scalars().all()
+    if not todo_model:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    return {"Your todos": todo_model}
+
+@router.post("")
 async def create_ToDo(todo_request: Todo_request,
                       tag: Tag_request,
                       db: db_dependency,
@@ -54,7 +69,7 @@ async def create_ToDo(todo_request: Todo_request,
     }
 
 
-@router.get("/get/{item_id}")
+@router.get("/{item_id}")
 async def todo_item(item_id: int,
                     db: db_dependency,
                     current_user: Get_current_user
@@ -73,7 +88,7 @@ async def todo_item(item_id: int,
     return {"todo": todo_model}
 
 
-@router.put("/change/item_id{item_id}")
+@router.put("/{item_id}")
 async def change_todo(item_id: int,
                       todo_request: Todo_request,
                       tag: Tag_request,
@@ -111,7 +126,7 @@ async def change_todo(item_id: int,
         raise HTTPException(status_code=404, detail="already exist")
 
 
-@router.delete("/delete/todo:{item_id}")
+@router.delete("/{item_id}")
 async def delete_todo(
         item_id: int,
         db: db_dependency,
@@ -136,20 +151,6 @@ async def delete_todo(
     await db.commit()
     return {"deletion": "success"}
 
-
-@router.get("/todos")
-async def all_todos(
-        db: db_dependency,
-        current_user: Get_current_user
-):
-    user_id = current_user.get("id")
-    stml = select(Todo).where(Todo.user_id == user_id)
-    result = await db.execute(stml)
-    todo_model  = result.scalars().all()
-    if not todo_model:
-        raise HTTPException(status_code=404, detail="Todo not found")
-
-    return {"Your todos": todo_model}
 
 @router.get("/me")
 async def check_current_user(current_user: Get_current_user):

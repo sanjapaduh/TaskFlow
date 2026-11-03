@@ -17,7 +17,8 @@ router = APIRouter(
 )
 
 
-@router.post("/login-page")
+
+@router.post("/login")
 async def render_login_page(
         db: db_dependency,
         user: CreateUserRequest,
@@ -49,7 +50,7 @@ async def render_login_page(
     return {'access_token': token, 'token_type': 'bearer', "logged": user}
 
 
-@router.post("/create_user")
+@router.post("/register")
 async def create_user(
         db: db_dependency,
         user: CreateUserRequest
