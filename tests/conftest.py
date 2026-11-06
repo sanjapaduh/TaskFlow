@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from database import Base
@@ -32,5 +32,13 @@ async def db_session():
 
 @pytest_asyncio.fixture
 async def async_client():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
+
+
+async def override_get_db():
+    async with TestingSessionLocal() as session:
+        yield session
+
+# 2. Указываем FastAPI подменить зависимость!
+app.dependency_overrides[setup_db] = override_get_db
