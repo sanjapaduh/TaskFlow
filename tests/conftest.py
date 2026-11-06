@@ -1,4 +1,4 @@
-
+import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -14,16 +14,21 @@ TestingSessionLocal = sessionmaker(engine_test, class_=AsyncSession, expire_on_c
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
+    # Создаем таблицы перед тестом
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        yield
+
+    yield
+
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
 
 @pytest_asyncio.fixture
 async def db_session():
     async with TestingSessionLocal() as session:
         yield session
+
 
 @pytest_asyncio.fixture
 async def async_client():
