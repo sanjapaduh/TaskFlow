@@ -14,6 +14,7 @@ env/
 # Secrets and Environment Variables
 .env
 .env.local
+.env.test
 
 # Python Cache
 __pycache__/
