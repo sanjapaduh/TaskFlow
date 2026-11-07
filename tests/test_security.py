@@ -1,21 +1,16 @@
-from urllib import response
-
 import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
-from routers.dependencies import get_current_user
-from main import app
-from models import Todo
+from httpx import AsyncClient
+
+from tests.conftest import test_user
 
 pytestmark = pytest.mark.asyncio
 
 
-
-@pytest.mark.asyncio
+# @pytest.mark.asyncio
 async def test_register(async_client: AsyncClient):
     payload = {
-        "username": "testuser1234",
-        "email": "testuser@exam234ple.com",
+        "username": "testuser2",
+        "email": "testuser@exam2ple.com",
         "password": "testpassw2ord"
 
     }
@@ -28,21 +23,21 @@ async def test_register(async_client: AsyncClient):
 
 
 
-@pytest.mark.asyncio
-async def test_login(async_client: AsyncClient):
-    payload = {
-        "username": "testuser1234",
-        "password": "testpassw2ord"
-    }
+# @pytest.mark.asyncio
+async def test_login(async_client: AsyncClient, test_user):
+    payload = {"username": test_user.username, "password": "testpassw2ord"}
     response = await async_client.post("/auth/login", json=payload)
 
     assert response.status_code == 200
     data= response.json()
+
+    print("LOCATION data IS HEAR: ", data)
+    print(" request IS HEAR: ", response.json())
     assert "access_token" in data
     assert data["token_type"] == "bearer"
     # assert data == {"success": True}
 
-@pytest.mark.asyncio
+# @pytest.mark.asyncio
 async def test_logout(async_client: AsyncClient):
     response = await async_client.post("/auth/logout")
     assert response.status_code == 200
