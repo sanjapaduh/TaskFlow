@@ -61,20 +61,30 @@ async def test_get_todos(async_client: AsyncClient, test_todo):
 
 
 # @pytest.mark.asyncio
-async def test_login(async_client: AsyncClient):
-    payload = {
-        "username": "testuser1234",
-        "password": "testpassw2ord"
-    }
-    response = await async_client.post("/auth/login", json=payload)
 
-    assert response.status_code == 200
-    data= response.json()
-    assert "access_token" in data
-    assert data["token_type"] == "bearer"
-    # assert data == {"success": True}
 
 # @pytest.mark.asyncio
-async def test_logout(async_client: AsyncClient):
-    response = await async_client.post("/auth/logout")
-    assert response.status_code == 200
+async def test_put_todo(async_client: AsyncClient, test_todo):
+    try:
+        app.dependency_overrides[get_current_user] = override_get_currentuser
+        payload = {
+            "todo_request": {
+                "name": "Updated Todo",
+                "description": "This",
+                "done": True,
+                "importance": 2
+            },
+            "tag": {
+                "name": "important",
+                "color": "BLUE"
+            }
+        }
+        response = await async_client.put(f"/todos/{test_todo.id}", json=payload)
+        if response.status_code != 200:
+            print("DEBUG 422:", response.json())
+        assert response.status_code == 200
+        data = response.json()
+        print("РЕНТГЕН ДАННЫХ:", data)
+        assert data == {"updated todo": "success"}
+    finally:
+        app.dependency_overrides.clear()

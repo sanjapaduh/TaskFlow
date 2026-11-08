@@ -120,7 +120,7 @@ async def change_todo(item_id: int,
             todo_model.tags.append(new_tag_object)
         await db.commit()
         await db.refresh(todo_model)
-        return {"updated todo": "success", "object ": todo_model}
+        return {"updated todo": "success"}
     except Exception as e:
         print(f"error {e}")
         raise HTTPException(status_code=404, detail="already exist")
