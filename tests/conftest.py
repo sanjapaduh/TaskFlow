@@ -72,7 +72,7 @@ async def test_user(db_session):
 @pytest_asyncio.fixture
 async def test_todo(db_session, test_user):
     todo = Todo(
-        name="Test Todo",
+        name="Test Todo1",
         description="This is a test todo",
         done=False,
         importance=1,

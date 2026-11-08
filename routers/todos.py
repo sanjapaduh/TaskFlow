@@ -34,6 +34,13 @@ async def all_todos(
 
     return {"Your todos": todo_model}
 
+
+@router.get("/me")
+async def check_current_user(current_user: Get_current_user):
+    # If the cookie is missing or invalid, the dependency will throw a 401 error.
+    # If it works, it will return the user dictionary.
+    return {"message": "Cookie authentication works!", "user_data": current_user}
+
 @router.post("")
 async def create_ToDo(todo_request: Todo_request,
                       tag: Tag_request,
@@ -120,7 +127,7 @@ async def change_todo(item_id: int,
             todo_model.tags.append(new_tag_object)
         await db.commit()
         await db.refresh(todo_model)
-        return {"updated todo": "success", "object ": todo_model}
+        return {"updated todo": "success"}
     except Exception as e:
         print(f"error {e}")
         raise HTTPException(status_code=404, detail="already exist")
@@ -152,8 +159,3 @@ async def delete_todo(
     return {"deletion": "success"}
 
 
-@router.get("/me")
-async def check_current_user(current_user: Get_current_user):
-    # If the cookie is missing or invalid, the dependency will throw a 401 error.
-    # If it works, it will return the user dictionary.
-    return {"message": "Cookie authentication works!", "user_data": current_user}
