@@ -53,7 +53,7 @@ async def test_get_todos(async_client: AsyncClient, test_todo):
         todo_list = data["Your todos"]
         assert len(todo_list) == 1
         print("РЕНТГЕН ДАННЫХ:", data)
-        assert todo_list[0]["name"] == "Test Todo"
+        assert todo_list[0]["name"] == "Test Todo1"
     finally:
         app.dependency_overrides.clear()
 
@@ -88,3 +88,50 @@ async def test_put_todo(async_client: AsyncClient, test_todo):
         assert data == {"updated todo": "success"}
     finally:
         app.dependency_overrides.clear()
+
+
+async def test_delete_todo(async_client: AsyncClient, test_todo):
+    try:
+        app.dependency_overrides[get_current_user] = override_get_currentuser
+        response = await async_client.delete(f"/todos/{test_todo.id}")
+        if response.status_code != 200:
+            print("DEBUG 422:", response.json())
+        assert response.status_code == 200
+        data = response.json()
+        print(data)
+        assert data == {"deletion": "success"}
+    finally:
+        app.dependency_overrides.clear()
+
+async def test_get_byId_todo(async_client: AsyncClient, test_todo):
+    try:
+        app.dependency_overrides[get_current_user] = override_get_currentuser
+        response = await async_client.get(f"/todos/{test_todo.id}")
+        if response.status_code != 200:
+            print("DEBUG 422:", response.json())
+        assert response.status_code == 200
+        data = response.json()
+        todo = data.get("todo")
+        print("your todo:", todo)
+        assert todo["name"] == "Test Todo1"
+    finally:
+        app.dependency_overrides.clear()
+
+async def test_get_current_user_me(async_client: AsyncClient):
+    app.dependency_overrides[get_current_user] = override_get_currentuser
+
+    try:
+        response = await async_client.get("/todos/me")
+        print("DEBUG 422:", response.json())
+        assert response.status_code == 200
+        assert response.json() == {
+            "message": "Cookie authentication works!",
+            "user_data": {
+                "id": 1,
+                "username": "testuser1234",
+                "email": "testuser@exam234ple.com",
+                "password": "testpassw2ord",
+            },
+        }
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
