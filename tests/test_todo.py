@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient
 
 from main import app
-from routers.security import get_current_user
+from core.security import get_current_user
 from tests.conftest import test_user
 
 pytestmark = pytest.mark.asyncio
