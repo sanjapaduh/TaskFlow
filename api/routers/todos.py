@@ -1,16 +1,18 @@
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy import update
 
 
 from sqlalchemy.orm import joinedload
 
-from starlette.templating import Jinja2Templates
+# from starlette.templating import Jinja2Templates
 
 from models import Todo, Tags
 from fastapi import APIRouter, HTTPException
 
+from repositories import todo_repository
 from .dependencies import db_dependency, Get_current_user
 from .schemas import Tag_request, Todo_request
+from services.todo_service import TodoNotFoundError, todo_service
 
 router = APIRouter(
     prefix="/todos",
@@ -21,15 +23,14 @@ router = APIRouter(
 
 
 @router.get("")
-async def all_todos(
+async def list_todos(
         db: db_dependency,
         current_user: Get_current_user
 ):
     user_id = current_user.get("id")
-    stml = select(Todo).where(Todo.user_id == user_id)
-    result = await db.execute(stml)
-    todo_model  = result.scalars().all()
-    if not todo_model:
+    try:
+        todo_model = await todo_service.list_todos(db, user_id)
+    except TodoNotFoundError:
         raise HTTPException(status_code=404, detail="Todo not found")
 
     return {"Your todos": todo_model}
@@ -47,32 +48,11 @@ async def create_ToDo(todo_request: Todo_request,
                       db: db_dependency,
                       current_user: Get_current_user):
     user_id = current_user.get("id")
-    stmt_max = select(func.max(Todo.user_task_number)).where(Todo.user_id == user_id)
-    max_number = await db.scalar(stmt_max)
-    next_number = (max_number or 0) + 1
-    todo_create_model = Todo(
-        user_task_number=next_number,
-        name=todo_request.name,
-        description=todo_request.description,
-        done=todo_request.done,
-        importance=todo_request.importance,
-
-        user_id=user_id
-    )
-
-    stmt_tag = (select(Tags).where(Tags.name == tag.name, Tags.color == tag.color))
-    tag_obj = await db.scalar(stmt_tag)
-    if tag_obj:
-        todo_create_model.tags.append(tag_obj)
-    else:
-        new_tag = Tags(name=tag.name, color=tag.color)
-        todo_create_model.tags.append(new_tag)
-    db.add(todo_create_model)
-    await db.commit()
-    await db.refresh(todo_create_model)
+    max_number = await todo_repository.get_max_task_number(db, user_id)
+    todo_create_model = await todo_service.create_todo(db, user_id, todo_request, tag)
+    todo_create_model = await todo_repository.save_todo(db, todo_create_model)
     return {
         "status": "success", "todo": {todo_create_model}
-
     }
 
 
@@ -157,5 +137,4 @@ async def delete_todo(
 
     await db.commit()
     return {"deletion": "success"}
-
 

@@ -5,7 +5,7 @@ import jwt
 import pytest
 from httpx import AsyncClient
 
-from routers.security import ALGORITHM
+from core.security import ALGORITHM
 from tests.conftest import test_user
 
 pytestmark = pytest.mark.asyncio
